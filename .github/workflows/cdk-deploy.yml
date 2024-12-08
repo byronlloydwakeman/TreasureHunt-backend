@@ -14,16 +14,12 @@ jobs:
   deploy:
     name: Deploy CDK Application
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
 
     steps:
       # Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
-
-      - name: Debug
-        run: |
-          echo ${{ secrets.AWS_ACCESS_KEY_ID }}
-          echo ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       # Setup Python 3.11
       - name: Set up Python
