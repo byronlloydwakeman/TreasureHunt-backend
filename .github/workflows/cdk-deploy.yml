@@ -20,23 +20,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Install Python 3.13
-      - name: Install Python 3.13
-        run: |
-          sudo apt update
-          sudo apt install -y wget build-essential zlib1g-dev
-          wget https://www.python.org/ftp/python/3.13.0/Python-3.13.0.tgz
-          tar -xvf Python-3.13.0.tgz
-          cd Python-3.13.0
-          ./configure --enable-optimizations
-          make
-          sudo make altinstall
-          python3.13 --version
+      # Setup Python 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11  # Use a pre-installed version
+
       # Install AWS CDK and dependencies
       - name: Install CDK and dependencies
         run: |
-          pip3.13 install aws-cdk.core aws-cdk.aws-lambda aws-cdk.aws-dynamodb
-          pip3.13 install -r requirements.txt
+          pip3 install aws-cdk.core aws-cdk.aws-lambda aws-cdk.aws-dynamodb
+          pip3 install -r requirements.txt
+
       # Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
