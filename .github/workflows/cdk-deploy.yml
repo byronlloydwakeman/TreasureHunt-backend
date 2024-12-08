@@ -50,4 +50,4 @@ jobs:
           CDK_DEFAULT_REGION: eu-west-2
         run: |
           echo "Deploying to environment: dev"
-          cdk deploy --all --require-approval never --context environment=dev
+          cdk deploy --all --require-approval never --context environment=branch_name=${{ github.ref_name }}
