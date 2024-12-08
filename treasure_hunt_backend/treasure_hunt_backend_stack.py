@@ -1,19 +1,100 @@
 from aws_cdk import (
-    # Duration,
+    Duration,
     Stack,
-    # aws_sqs as sqs,
+    aws_sqs as sqs,
+    aws_dynamodb as dynamodb,
+    aws_lambda as lambda_,
+    aws_iam as iam
 )
 from constructs import Construct
+
 
 class TreasureHuntBackendStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        environment = self.node.try_get_context("env") or "dev"
 
-        # example resource
-        # queue = sqs.Queue(
-        #     self, "TreasureHuntBackendQueue",
-        #     visibility_timeout=Duration.seconds(300),
-        # )
+        table_pk = "game_instance_id"
+        table_sk = "timestamp"
+
+        # DynamoDB Table
+        table_name = f"TreasureHuntTable-{environment}"
+        table = dynamodb.Table(
+            self,
+            "TreasureHuntTable",
+            table_name=table_name,
+            partition_key=dynamodb.Attribute(
+                name=table_pk, type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name=table_sk, type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+        )
+
+        lambda_dir = "treasure_hunt_backend\lambda"
+
+        # Lambda Function: Create Game Instance
+        create_game_lambda = lambda_.Function(
+            self,
+            "CreateGameLambda",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            handler="create_game.lambda_handler",
+            code=lambda_.Code.from_asset(lambda_dir),
+            environment={
+                "TABLE_NAME": table_name,
+                "ENVIRONMENT": environment,
+            },
+        )
+
+        # Lambda Function: Read Game Instance
+        read_game_lambda = lambda_.Function(
+            self,
+            "ReadGameLambda",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            handler="read_game.lambda_handler",
+            code=lambda_.Code.from_asset(lambda_dir),
+            environment={
+                "TABLE_NAME": table_name,
+                "ENVIRONMENT": environment,
+            },
+        )
+
+        # Grant DynamoDB access to Lambda functions
+        table.grant_read_write_data(create_game_lambda)
+        table.grant_read_write_data(read_game_lambda)
+        create_game_lambda.grant.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ssm:GetParameter",           # For single parameters
+                    "ssm:GetParameters",          # For multiple parameters
+                ],
+                resources=[
+                    f"arn:aws:ssm:{self.region}:{self.account}:parameter/*",  # All parameters
+                ],
+            )
+        )
+
+        # Lambda Aliases
+        create_game_alias = lambda_.Alias(
+            self,
+            "CreateGameAlias",
+            alias_name=environment,
+            version=create_game_lambda.current_version,
+        )
+
+        read_game_alias = lambda_.Alias(
+            self,
+            "ReadGameAlias",
+            alias_name=environment,
+            version=read_game_lambda.current_version,
+        )
+
+        # SQS
+        queue = sqs.Queue(
+            self,
+            "TreasureHuntQueue",
+            visibility_timeout=Duration.seconds(300),
+        )
