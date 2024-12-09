@@ -62,20 +62,30 @@ class TreasureHuntBackendStack(Stack):
             },
         )
 
+        lambdaSSMAccess = iam.PolicyStatement(
+            actions=[
+                "ssm:GetParameter",  # For single parameters
+                "ssm:GetParameters",  # For multiple parameters
+            ],
+            resources=[
+                f"arn:aws:ssm:{self.region}:{self.account}:parameter/*",  # All parameters
+            ]
+        )
+
+        lambdaKMSAccess = iam.PolicyStatement(
+            actions=["kms:Decrypt"],
+            resources=[f"arn:aws:kms:{self.region}:{self.account}:key/09a58808-d99a-4f1d-b2eb-2da1e1c53ee3"]
+        )
+
         # Grant DynamoDB access to Lambda functions
         table.grant_read_write_data(create_game_lambda)
         table.grant_read_write_data(read_game_lambda)
-        create_game_lambda.grant.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "ssm:GetParameter",           # For single parameters
-                    "ssm:GetParameters",          # For multiple parameters
-                ],
-                resources=[
-                    f"arn:aws:ssm:{self.region}:{self.account}:parameter/*",  # All parameters
-                ],
-            )
-        )
+
+        create_game_lambda.add_to_role_policy(lambdaSSMAccess)
+        create_game_lambda.add_to_role_policy(lambdaKMSAccess)
+
+        read_game_lambda.add_to_role_policy(lambdaSSMAccess)
+        read_game_lambda.add_to_role_policy(lambdaKMSAccess)
 
         # Lambda Aliases
         create_game_alias = lambda_.Alias(
