@@ -27,6 +27,16 @@ jobs:
         with:
           python-version: 3.11  # Use a pre-installed version
 
+      # Install Node.js (for CDK CLI)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18  # Ensure a compatible Node.js version is used
+
+      # Install AWS CDK CLI
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+
       # Install AWS CDK and dependencies
       - name: Install CDK and dependencies
         run: |
@@ -43,10 +53,8 @@ jobs:
 
       # Deploy the CDK application
       - name: Deploy CDK Stack using Docker
-        uses: docker://amazon/aws-cdk:latest
         env:
           CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: eu-west-2
-        with:
-          args: cdk deploy --all --require-approval never --context environment=branch_name=${{ github.ref_name }}
+        run: cdk deploy --all --require-approval never --context environment=branch_name=${{ github.ref_name }}
 
