@@ -40,26 +40,28 @@ class TreasureHuntBackendStack(Stack):
         create_game_lambda = lambda_.Function(
             self,
             "CreateGameLambda",
-            runtime=lambda_.Runtime.PYTHON_3_13,
+            runtime=lambda_.Runtime.PYTHON_3_11,
             handler="create_game.lambda_handler",
             code=lambda_.Code.from_asset(lambda_dir),
             environment={
                 "TABLE_NAME": table_name,
                 "ENVIRONMENT": environment,
             },
+            function_name=f"CreateGameLambda-{environment}"
         )
 
         # Lambda Function: Read Game Instance
         read_game_lambda = lambda_.Function(
             self,
             "ReadGameLambda",
-            runtime=lambda_.Runtime.PYTHON_3_13,
+            runtime=lambda_.Runtime.PYTHON_3_11,
             handler="read_game.lambda_handler",
             code=lambda_.Code.from_asset(lambda_dir),
             environment={
                 "TABLE_NAME": table_name,
                 "ENVIRONMENT": environment,
             },
+            function_name=f"ReadGameLambda-{environment}"
         )
 
         lambdaSSMAccess = iam.PolicyStatement(
