@@ -56,5 +56,5 @@ jobs:
         env:
           CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: eu-west-2
-        run: cdk deploy --all --require-approval never --context environment=branch_name=${{ github.ref_name }}
+        run: cdk deploy --all --require-approval never --context environment=${{ github.ref_name }}
 
