@@ -34,7 +34,7 @@ class TreasureHuntBackendStack(Stack):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
         )
 
-        lambda_dir = "treasure_hunt_backend\lambda"
+        lambda_dir = "treasure_hunt_backend/lambda"
 
         # Lambda Function: Create Game Instance
         create_game_lambda = lambda_.Function(
